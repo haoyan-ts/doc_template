@@ -103,7 +103,7 @@ To contribute to this project:
 
 ## License
 
-[Specify your license here]
+MIT License
 
 ## Credits
 
