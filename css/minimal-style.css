@@ -139,7 +139,7 @@ code {
   background: rgb(240, 240, 240);
   margin: 0px 2px;
   padding: 0px 5px;
-  color: rgb(10, 10, 10);
+  /* color: rgb(10, 10, 10); */
   font-size: 0.85em;
   font-family: "Noto Sans Mono", Consolas, monospace, "Noto Sans", "Noto Sans JP", "Noto Sans SC";
   line-height: 1.4em;
