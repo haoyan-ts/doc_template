@@ -1,0 +1,38 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environment directories
+venv/
+env/
+ENV/
+virtualenv/
+
+# Temporary and generated files
+tmp/
+*.tmp.html
+*.tmp.md
+*.debug.html
+
+# Generated PDFs
+built/*.pdf
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local configuration
+.env
+.env.local
+
+# Log files
+*.log
