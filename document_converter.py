@@ -188,10 +188,6 @@ def convert_to_html(input_file, output_dir="dist", debug=False):
     
     return True, "HTML conversion completed successfully.", html_path
 
-
-
-
-
 def run_workflow(input_dir="docs", output_dir="dist", debug=False):
     """
     Run the complete document conversion workflow

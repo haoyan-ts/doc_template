@@ -36,3 +36,8 @@ built/*.pdf
 
 # Log files
 *.log
+
+node_modules/
+public/
+output/
+uploads/
