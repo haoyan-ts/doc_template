@@ -30,8 +30,10 @@ export function downloadRouter(documentService: DocumentService) {
         zip: 'application/zip',
       };
 
+      console.log(`Downloading file: ${filename} (${fileType})`);
+      
       res.setHeader('Content-Type', mimeTypes[fileType as keyof typeof mimeTypes]);
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURI(filename)}"`);
 
       stream.pipe(res);
     } catch (error) {

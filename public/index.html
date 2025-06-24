@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Ensure proper UTF-8 handling for international characters in filenames -->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Generator Service</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .upload-section {
+        padding: 40px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .upload-zone {
+        border: 3px dashed #667eea;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9ff;
+      }
+
+      .upload-zone:hover {
+        border-color: #764ba2;
+        background: #f0f4ff;
+        transform: translateY(-2px);
+      }
+
+      .upload-zone.dragover {
+        border-color: #28a745;
+        background: #f0fff4;
+      }
+
+      .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 20px;
+      }
+
+      .upload-text {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: #666;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: inline-block;
+        text-decoration: none;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      .jobs-section {
+        padding: 40px;
+      }
+
+      .job-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+      }
+
+      .job-item:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .job-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #333;
+      }
+
+      .job-status {
+        padding: 5px 15px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .status-uploaded {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .status-processing {
+        background: #fff3e0;
+        color: #f57c00;
+        animation: pulse 2s infinite;
+      }
+
+      .status-processed {
+        background: #e8f5e8;
+        color: #2e7d32;
+      }
+
+      .status-error {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .job-meta {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 15px;
+      }
+
+      .job-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn-small {
+        padding: 8px 20px;
+        font-size: 0.9rem;
+        background: linear-gradient(45deg, #28a745, #20c997);
+      }
+
+      .btn-small:hover {
+        background: linear-gradient(45deg, #218838, #1ea085);
+      }
+
+      .btn-disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .btn-disabled:hover {
+        transform: none;
+        box-shadow: none;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .error-message {
+        background: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+
+      @media (max-width: 768px) {
+        .job-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .job-actions {
+          width: 100%;
+        }
+
+        .btn-small {
+          flex: 1;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📄TechShare Document Generator</h1>
+        <p>Convert Markdown files to HTML and PDF with styling</p>
+      </div>
+
+      <div class="upload-section">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">
+            Drag & drop your Markdown files here, or click to browse
+          </div>
+          <button
+            class="btn"
+            onclick="event.stopPropagation(); document.getElementById('fileInput').click()"
+          >
+            Choose Files
+          </button>
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            multiple
+            accept=".md"
+          />
+        </div>
+      </div>
+
+      <div class="jobs-section">
+        <h2 style="margin-bottom: 30px; color: #333">Processing Jobs</h2>
+        <div id="jobsList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p>No jobs yet. Upload some Markdown files to get started!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize Socket.IO
+      const socket = io();
+
+      // DOM elements
+      const uploadZone = document.getElementById("uploadZone");
+      const fileInput = document.getElementById("fileInput");
+      const jobsList = document.getElementById("jobsList");
+
+      // File upload handling
+      uploadZone.addEventListener("click", (e) => {
+        // Trigger file input click when upload zone is clicked
+        fileInput.click();
+      });
+
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("dragover");
+      });
+
+      uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("dragover");
+      });
+
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove("dragover");
+        handleFiles(e.dataTransfer.files);
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+      });
+
+      // Handle file uploads
+      async function handleFiles(files) {
+        const formData = new FormData();
+
+        console.log(files);
+        for (let file of files) {
+          if (file.name.endsWith(".md")) {
+            const blob = new Blob([file], {
+              type: "text/markdown",
+            });
+            formData.append("markdown", blob, encodeURIComponent(file.name));
+          }
+        }
+
+        if (formData.has("markdown")) {
+          try {
+            const response = await fetch("/api/upload/multiple", {
+              method: "POST",
+              body: formData,
+              // Don't set Content-Type header - let the browser set it with boundary for multipart/form-data
+              headers: {
+                Accept: "application/json",
+              },
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              console.log("Files uploaded successfully:", result.jobIds);
+              loadJobs(); // Refresh the jobs list
+            } else {
+              alert("Upload failed: " + result.error);
+            }
+          } catch (error) {
+            console.error("Upload error:", error);
+            alert("Upload failed: " + error.message);
+          }
+        } else {
+          alert("Please select Markdown (.md) files only.");
+        }
+      } // Load and display jobs
+      async function loadJobs() {
+        try {
+          const response = await fetch("/api/files", {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json; charset=UTF-8",
+            },
+          });
+          const result = await response.json();
+
+          console.log("Loaded jobs:", result.jobs);
+          displayJobs(result.jobs || []);
+        } catch (error) {
+          console.error("Error loading jobs:", error);
+        }
+      }
+
+      // Display jobs in the UI
+      function displayJobs(jobs) {
+        if (jobs.length === 0) {
+          jobsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No jobs yet. Upload some Markdown files to get started!</p>
+                    </div>
+                `;
+          return;
+        }
+
+        jobsList.innerHTML = jobs
+          .map(
+            (job) => `
+                <div class="job-item" data-job-id="${job.id}">
+                    <div class="job-header">
+                        <div class="job-title">${job.originalName}</div>
+                        <div class="job-status status-${job.status}">${
+              job.status.charAt(0).toUpperCase() + job.status.slice(1)
+            }</div>
+                    </div>
+                    <div class="job-meta">
+                        Created: ${new Date(job.createdAt).toLocaleString()}
+                        ${
+                          job.completedAt
+                            ? `• Completed: ${new Date(
+                                job.completedAt
+                              ).toLocaleString()}`
+                            : ""
+                        }
+                    </div>                    ${
+                      job.status === "processing"
+                        ? '<div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>'
+                        : ""
+                    }
+                    ${
+                      job.error
+                        ? `<div class="error-message">${job.error}</div>`
+                        : ""
+                    }
+                    <div class="job-actions">
+                        ${
+                          job.status === "processed"
+                            ? `
+                            <a href="/api/download/${job.id}/html" class="btn btn-small" download>
+                                📄 Download HTML
+                            </a>
+                            <a href="/api/download/${job.id}/pdf" class="btn btn-small" download>
+                                📑 Download PDF
+                            </a>
+                            <a href="/api/download/${job.id}/zip" class="btn btn-small" download>
+                                📦 Download ZIP
+                            </a>
+                        `
+                            : `
+                            <button class="btn btn-small btn-disabled" disabled>
+                                ${
+                                  job.status === "processing"
+                                    ? "⏳ Processing..."
+                                    : "⏸️ Pending"
+                                }
+                            </button>
+                        `
+                        }
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      // Socket.IO event handlers
+      socket.on("job-update", (job) => {
+        console.log("Job update:", job);
+        loadJobs(); // Refresh the jobs list when a job updates
+      });
+
+      // Load jobs on page load
+      loadJobs();
+
+      // Refresh jobs every 30 seconds
+      setInterval(loadJobs, 30000);
+    </script>
+  </body>
+</html>

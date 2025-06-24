@@ -38,6 +38,5 @@ built/*.pdf
 *.log
 
 node_modules/
-public/
 output/
 uploads/

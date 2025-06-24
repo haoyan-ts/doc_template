@@ -22,8 +22,18 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Set default encoding for file operations
+process.env.NODE_OPTIONS = '--max-old-space-size=4096';
+if (!process.env.LANG) {
+  process.env.LANG = 'en_US.UTF-8';
+}
+if (!process.env.LC_ALL) {
+  process.env.LC_ALL = 'en_US.UTF-8';
+}
 
 // Initialize document service with socket.io for real-time updates
 const documentService = new DocumentService(io);
