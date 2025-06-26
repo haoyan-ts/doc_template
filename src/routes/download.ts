@@ -4,9 +4,9 @@ import { DocumentService } from '../services/DocumentService';
 export function downloadRouter(documentService: DocumentService) {
   const router = express.Router();
 
-  router.get('/:jobId/:fileType', (async (req, res) => {
+  router.get('/:jobId/:fileId/:fileType', (async (req, res) => {
     try {
-      const { jobId, fileType } = req.params;
+      const { jobId, fileId, fileType } = req.params;
       
       if (!['html', 'pdf', 'zip'].includes(fileType)) {
         return res.status(400).json({ error: 'Invalid file type' });
@@ -14,6 +14,7 @@ export function downloadRouter(documentService: DocumentService) {
 
       const fileData = await documentService.getFileStream(
         jobId,
+        parseInt(fileId),
         fileType as 'html' | 'pdf' | 'zip'
       );
 

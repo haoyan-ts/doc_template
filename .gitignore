@@ -40,3 +40,4 @@ built/*.pdf
 node_modules/
 output/
 uploads/
+jobs/

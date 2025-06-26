@@ -250,6 +250,18 @@
         opacity: 0.5;
       }
 
+      .upload-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .upload-buttons .btn {
+        min-width: 140px;
+      }
+
       @media (max-width: 768px) {
         .job-header {
           flex-direction: column;
@@ -279,20 +291,37 @@
         <div class="upload-zone" id="uploadZone">
           <div class="upload-icon">📁</div>
           <div class="upload-text">
-            Drag & drop your Markdown files here, or click to browse
+            Drag & drop your Markdown files or folders here, or click to browse
           </div>
-          <button
-            class="btn"
-            onclick="event.stopPropagation(); document.getElementById('fileInput').click()"
-          >
-            Choose Files
-          </button>
+          <div class="upload-buttons">
+            <button
+              class="btn"
+              id="chooseFilesBtn"
+              onclick="event.stopPropagation(); document.getElementById('fileInput').click()"
+            >
+              📄 Choose Files
+            </button>
+            <button
+              class="btn"
+              id="chooseFolderBtn"
+              onclick="event.stopPropagation(); document.getElementById('folderInput').click()"
+            >
+              📁 Choose Folder
+            </button>
+          </div>
           <input
             type="file"
             id="fileInput"
             class="file-input"
             multiple
-            accept=".md"
+            accept=".md,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.doc,.docx,.txt"
+          />
+          <input
+            type="file"
+            id="folderInput"
+            class="file-input"
+            webkitdirectory
+            accept=".md,.png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.doc,.docx,.txt"
           />
         </div>
       </div>
@@ -310,17 +339,21 @@
 
     <script>
       // Initialize Socket.IO
-      const socket = io();
-
-      // DOM elements
+      const socket = io(); // DOM elements
       const uploadZone = document.getElementById("uploadZone");
       const fileInput = document.getElementById("fileInput");
+      const folderInput = document.getElementById("folderInput");
       const jobsList = document.getElementById("jobsList");
-
       // File upload handling
       uploadZone.addEventListener("click", (e) => {
-        // Trigger file input click when upload zone is clicked
-        fileInput.click();
+        // Only trigger if clicking on the upload zone itself, not the buttons
+        if (
+          e.target === uploadZone ||
+          e.target.classList.contains("upload-icon") ||
+          e.target.classList.contains("upload-text")
+        ) {
+          fileInput.click();
+        }
       });
 
       uploadZone.addEventListener("dragover", (e) => {
@@ -337,8 +370,11 @@
         uploadZone.classList.remove("dragover");
         handleFiles(e.dataTransfer.files);
       });
-
       fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+      });
+
+      folderInput.addEventListener("change", (e) => {
         handleFiles(e.target.files);
       });
 
@@ -347,30 +383,42 @@
         const formData = new FormData();
 
         console.log(files);
+
+        let hasFiles = false;
         for (let file of files) {
-          if (file.name.endsWith(".md")) {
-            const blob = new Blob([file], {
-              type: "text/markdown",
-            });
-            formData.append("markdown", blob, encodeURIComponent(file.name));
+          // Check if it's a markdown file
+          if (file.name.endsWith(".md") || file.type === "text/markdown") {
+            hasFiles = true;
+            formData.append("files", file, encodeURIComponent(file.webkitRelativePath));
+          } else if (
+            file.type.startsWith("image/") ||
+            file.type.startsWith("video/") ||
+            file.type.startsWith("audio/") ||
+            file.name.match(/\.(png|jpg|jpeg|gif|svg|webp|pdf|doc|docx|txt)$/i)
+          ) {
+            // Add media files
+            formData.append("files", file, encodeURIComponent(file.webkitRelativePath));
           }
         }
 
-        if (formData.has("markdown")) {
+        if (!hasFiles) {
+          alert("Please include at least one Markdown (.md) file.");
+          return;
+        }
+
+        if (formData.has("files")) {
           try {
             const response = await fetch("/api/upload/multiple", {
               method: "POST",
               body: formData,
-              // Don't set Content-Type header - let the browser set it with boundary for multipart/form-data
               headers: {
                 Accept: "application/json",
               },
             });
-
             const result = await response.json();
 
             if (result.success) {
-              console.log("Files uploaded successfully:", result.jobIds);
+              console.log("Files uploaded successfully:", result.jobId);
               loadJobs(); // Refresh the jobs list
             } else {
               alert("Upload failed: " + result.error);
@@ -380,7 +428,7 @@
             alert("Upload failed: " + error.message);
           }
         } else {
-          alert("Please select Markdown (.md) files only.");
+          alert("Please include at least one Markdown (.md) file.");
         }
       } // Load and display jobs
       async function loadJobs() {
@@ -456,13 +504,13 @@
                             </a>
                         `
                             : `
-                            <button class="btn btn-small btn-disabled" disabled>
+                            <a class="btn btn-small btn-disabled" disabled>
                                 ${
                                   job.status === "processing"
                                     ? "⏳ Processing..."
                                     : "⏸️ Pending"
                                 }
-                            </button>
+                            </a>
                         `
                         }
                     </div>

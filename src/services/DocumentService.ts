@@ -5,11 +5,13 @@ import archiver from "archiver";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { Multer } from "multer";
+import { Express } from "express";
 
 export interface ProcessingJob {
   id: string;
-  fileName: string;
-  originalName: string; // Original name of the file uploaded
+  fileName?: string;
+  originalName?: string; // Original name of the file uploaded
   status: "uploaded" | "processing" | "processed" | "error";
   createdAt: Date;
   completedAt?: Date;
@@ -17,7 +19,7 @@ export interface ProcessingJob {
     html?: string;
     pdf?: string;
     zip?: string;
-  };
+  }[];
   error?: string;
 }
 
@@ -25,6 +27,7 @@ export class DocumentService {
   private jobs: Map<string, ProcessingJob> = new Map();
   private io: Server;
   private uploadDir = path.join(process.cwd(), "uploads");
+  private jobsDir = path.join(process.cwd(), "jobs");
   private outputDir = path.join(process.cwd(), "output");
 
   constructor(io: Server) {
@@ -36,6 +39,7 @@ export class DocumentService {
     try {
       await fs.mkdir(this.uploadDir, { recursive: true });
       await fs.mkdir(this.outputDir, { recursive: true });
+      await fs.mkdir(this.jobsDir, { recursive: true });
       await fs.mkdir(path.join(this.outputDir, "html"), { recursive: true });
       await fs.mkdir(path.join(this.outputDir, "pdf"), { recursive: true });
       await fs.mkdir(path.join(this.outputDir, "zip"), { recursive: true });
@@ -74,135 +78,45 @@ export class DocumentService {
 
     return safePath;
   }
-  async processMarkdownFile(
-    filePath: string,
-    fileName: string,
-    originalName: string
-  ): Promise<string> {
-    const jobId = uuidv4();
+  // async processMarkdownFile(
+  //   filePath: string,
+  //   fileName: string,
+  //   originalName: string
+  // ): Promise<string> {
+  //   const jobId = uuidv4();
 
-    console.log(`Received file: ${fileName}`);
-    console.log(`Processing file: ${decodeURIComponent(originalName)}`);
-    console.log(`Job ID: ${jobId}`);
+  //   console.log(`Received file: ${fileName}`);
+  //   console.log(`Processing file: ${decodeURIComponent(originalName)}`);
+  //   console.log(`Job ID: ${jobId}`);
 
-    const job: ProcessingJob = {
-      id: jobId,
-      fileName: fileName,
-      originalName: decodeURIComponent(originalName),
-      status: "uploaded",
-      createdAt: new Date(),
-    };
+  //   // Create job folder and move file
+  //   const jobFolder = path.join(this.uploadDir, jobId);
+  //   await fs.mkdir(jobFolder, { recursive: true });
 
-    this.jobs.set(jobId, job);
-    this.emitJobUpdate(job);
+  //   const destPath = path.join(jobFolder, originalName);
+  //   await fs.copyFile(filePath, destPath);
 
-    // Start processing asynchronously
-    this.processFile(jobId, filePath).catch((error) => {
-      console.error(`Processing failed for job ${jobId}:`, error);
-      job.status = "error";
-      job.error = error.message;
-      this.emitJobUpdate(job);
-    });
+  //   const job: ProcessingJob = {
+  //     id: jobId,
+  //     fileName: fileName,
+  //     originalName: decodeURIComponent(originalName),
+  //     status: "uploaded",
+  //     createdAt: new Date(),
+  //   };
 
-    return jobId;
-  }
+  //   this.jobs.set(jobId, job);
+  //   this.emitJobUpdate(job);
 
-  private async processFile(jobId: string, filePath: string) {
-    const job = this.jobs.get(jobId);
-    if (!job) return;
+  //   // Start processing asynchronously using self-contained method
+  //   this.processBatchFile(jobId, destPath).catch((error) => {
+  //     console.error(`Processing failed for job ${jobId}:`, error);
+  //     job.status = "error";
+  //     job.error = error.message;
+  //     this.emitJobUpdate(job);
+  //   });
 
-    try {
-      // Update status to processing
-      job.status = "processing";
-      this.emitJobUpdate(job);
-
-      const baseName = path.parse(job.originalName).name;
-      console.log(`Job ${jobId} completed successfully: ${baseName}`);
-
-      const htmlPath = await this.convertToHtml(filePath, baseName);
-      const staticHtmlPath = await this.renderStaticHtml(htmlPath, baseName);
-      const pdfPath = await this.generatePdf(staticHtmlPath, baseName);
-      const zipPath = await this.createZip(staticHtmlPath, pdfPath, baseName);
-
-      console.log(`Generated files: ${htmlPath}, ${pdfPath}, ${zipPath}`);
-      console.log(`Zip file created: ${zipPath}`);
-      console.log(`Static HTML file created: ${staticHtmlPath}`);
-      console.log(`PDF file created: ${pdfPath}`);
-      console.log(`HTML file created: ${htmlPath}`);
-
-      // Update job with generated files
-      job.files = {
-        html: path.relative(this.outputDir, staticHtmlPath),
-        pdf: path.relative(this.outputDir, pdfPath),
-        zip: path.relative(this.outputDir, zipPath),
-      };
-      job.status = "processed";
-      job.completedAt = new Date();
-
-      this.emitJobUpdate(job);
-    } catch (error) {
-      job.status = "error";
-      job.error = error instanceof Error ? error.message : "Unknown error";
-      this.emitJobUpdate(job);
-    }
-  }
-  private async convertToHtml(
-    markdownPath: string,
-    baseName: string
-  ): Promise<string> {
-    const sanitizedBaseName = this.sanitizeFilename(baseName);
-    const htmlPath = this.createSafeFilePath(
-      path.join(this.outputDir, "html"),
-      sanitizedBaseName,
-      ".html"
-    );
-
-    return new Promise((resolve, reject) => {
-      const pandocArgs = [
-        markdownPath,
-        "--from",
-        "gfm",
-        "--to",
-        "html5",
-        "--toc",
-        "--toc-depth=3",
-        "--standalone",
-        "--template=templates/custom.html",
-        "--output",
-        htmlPath,
-      ];
-
-      // Add CSS files
-      const cssDir = path.join(process.cwd(), "css");
-      const cssFiles = ["minimal-style.css", "tokyo-night-light.css"];
-
-      cssFiles.forEach((cssFile) => {
-        const cssPath = path.join(cssDir, cssFile);
-        pandocArgs.push("--css", cssPath);
-      });
-
-      const pandoc = spawn("pandoc", pandocArgs, {
-        env: { ...process.env, LANG: "en_US.UTF-8", LC_ALL: "en_US.UTF-8" },
-      });
-
-      let stderr = "";
-      pandoc.stderr.on("data", (data: Buffer) => {
-        stderr += data.toString("utf8");
-      });
-
-      pandoc.on("close", (code: number | null) => {
-        if (code === 0) {
-          resolve(htmlPath);
-        } else {
-          reject(new Error(`Pandoc failed: ${stderr}`));
-        }
-      });
-
-      pandoc.on("error", (error: Error) => {
-        reject(new Error(`Failed to start pandoc: ${error.message}`));
-      });
-    });
-  }
+  //   return jobId;
+  // }
 
   private async renderStaticHtml(
     htmlPath: string,
@@ -328,7 +242,9 @@ export class DocumentService {
 
   private emitJobUpdate(job: ProcessingJob) {
     this.io.emit("job-update", job);
-    console.log(`Job update emitted for job ID: ${job.id}, status: ${job.status}`);
+    console.log(
+      `Job update emitted for job ID: ${job.id}, status: ${job.status}`
+    );
   }
 
   getJob(id: string): ProcessingJob | undefined {
@@ -343,24 +259,193 @@ export class DocumentService {
 
   async getFileStream(
     jobId: string,
+    fileId: number,
     fileType: "html" | "pdf" | "zip"
   ): Promise<{ stream: NodeJS.ReadableStream; filename: string } | null> {
     const job = this.jobs.get(jobId);
-    if (!job || !job.files || !job.files[fileType]) {
+    if (!job || !job.files || !job.files[fileId][fileType]) {
       return null;
     }
 
-    const originalName = job.originalName;
-    const filePath = path.join(this.outputDir, job.files[fileType]!);
+    const fileName = job.files[fileId]["html"] as string;
+    const filePath = path.join(this.outputDir, job.files[fileId][fileType]!);
     try {
       const stream = require("fs").createReadStream(filePath);
       const ext = path.extname(filePath);
-      const baseName = path.parse(originalName).name;
+      const baseName = path.parse(fileName).name;
       const filename = `${baseName}${ext}`;
 
       return { stream, filename };
     } catch (error) {
       return null;
     }
+  }
+
+  async processMarkdownBatch(
+    markdownFiles: Express.Multer.File[],
+    mediaFiles: Express.Multer.File[],
+    jobId: string
+  ): Promise<{ jobId: string }> {
+    console.log(`Processing batch with Job ID: ${jobId}`);
+    console.log(`Has Markdown file and ${mediaFiles.length} media files`);
+
+    // Copy all files to job folder and reconstruct the file structure
+    const jobFolder = path.join(this.jobsDir, jobId);
+    await fs.mkdir(jobFolder, { recursive: true });
+    console.log(`Job folder created: ${jobFolder}`);
+
+    for (const file of markdownFiles) {
+      const originalPath = decodeURIComponent(file.originalname);
+      console.log(`Original path: ${originalPath}`);
+      const pathParts = originalPath.split("/");
+      // Remove the first directory if there are multiple directory levels
+      const adjustedPath =
+        pathParts.length > 1 ? pathParts.slice(1).join("/") : originalPath;
+      const destPath = path.join(jobFolder, adjustedPath);
+
+      await fs.mkdir(path.dirname(destPath), { recursive: true });
+      await fs.copyFile(file.path, destPath);
+    }
+
+    for (const file of mediaFiles) {
+      const originalPath = decodeURIComponent(file.originalname);
+      console.log(`Media file path: ${originalPath}`);
+      const pathParts = originalPath.split("/");
+      // Remove the first directory if there are multiple directory levels
+      const adjustedPath =
+        pathParts.length > 1 ? pathParts.slice(1).join("/") : originalPath;
+      const destPath = path.join(jobFolder, adjustedPath);
+
+      await fs.mkdir(path.dirname(destPath), { recursive: true });
+      await fs.copyFile(file.path, destPath);
+    }
+
+    const job: ProcessingJob = {
+      id: jobId,
+      status: "uploaded",
+      createdAt: new Date(),
+    };
+
+    this.jobs.set(jobId, job);
+    this.emitJobUpdate(job);
+
+    // Start processing asynchronously
+    this.processBatchFile(jobId).catch((error) => {
+      console.error(`Processing failed for job ${jobId}:`, error);
+      job.status = "error";
+      job.error = error.message;
+      this.emitJobUpdate(job);
+    });
+
+    return { jobId };
+  }
+
+  private async processBatchFile(jobId: string): Promise<void> {
+    const job = this.jobs.get(jobId);
+    if (!job) return;
+
+    try {
+      // Update status to processing
+      job.status = "processing";
+      this.emitJobUpdate(job);
+
+      // find all markdown files in the job folder according to the jobId
+      const jobFolder = path.join(this.jobsDir, jobId);
+      const files = await fs.readdir(jobFolder);
+      const markdownFiles = files.filter((file) => file.endsWith(".md"));
+
+      for (const file of markdownFiles) {
+        const filePath = path.join(jobFolder, file);
+        const baseName = path.parse(file).name;
+
+        console.log(
+          `Processing file: "${filePath}" with base name: "${baseName}"`
+        );
+        const htmlPath = await this.convertToHtmlSelfContained(
+          filePath,
+          baseName,
+          jobId
+        );
+        const staticHtmlPath = await this.renderStaticHtml(htmlPath, baseName);
+        const pdfPath = await this.generatePdf(staticHtmlPath, baseName);
+        const zipPath = await this.createZip(staticHtmlPath, pdfPath, baseName);
+
+        console.log(`Generated files: ${htmlPath}, ${pdfPath}, ${zipPath}`);
+        // Update job with generated files
+        if (!job.files) {
+          job.files = [];
+        }
+
+        job.files.push({
+          html: path.relative(this.outputDir, staticHtmlPath),
+          pdf: path.relative(this.outputDir, pdfPath),
+          zip: path.relative(this.outputDir, zipPath),
+        });
+      }
+
+      job.status = "processed";
+      job.completedAt = new Date();
+
+      this.emitJobUpdate(job);
+    } catch (error) {
+      job.status = "error";
+      job.error = error instanceof Error ? error.message : "Unknown error";
+      this.emitJobUpdate(job);
+    }
+  }
+
+  private async convertToHtmlSelfContained(
+    markdownPath: string,
+    baseName: string,
+    jobId: string
+  ): Promise<string> {
+    const sanitizedBaseName = this.sanitizeFilename(baseName);
+    const htmlPath = this.createSafeFilePath(
+      path.join(this.outputDir, "html"),
+      sanitizedBaseName,
+      ".html"
+    );
+
+    const jobFolder = path.join(this.jobsDir, jobId);
+
+    return new Promise((resolve, reject) => {
+      const pandocArgs = [
+        markdownPath,
+        "--from",
+        "gfm",
+        "--to",
+        "html5",
+        "--toc",
+        "--toc-depth=3",
+        "--standalone",
+        "--template=../../templates/custom.html",
+        "--embed-resources",
+        "--output",
+        htmlPath,
+      ];
+
+      // Set the working directory to the job folder so relative paths work
+      const pandoc = spawn("pandoc", pandocArgs, {
+        cwd: jobFolder,
+        env: { ...process.env, LANG: "en_US.UTF-8", LC_ALL: "en_US.UTF-8" },
+      });
+
+      let stderr = "";
+      pandoc.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString("utf8");
+      });
+
+      pandoc.on("close", (code: number | null) => {
+        if (code === 0) {
+          resolve(htmlPath);
+        } else {
+          reject(new Error(`Pandoc failed: ${stderr}`));
+        }
+      });
+
+      pandoc.on("error", (error: Error) => {
+        reject(new Error(`Failed to start pandoc: ${error.message}`));
+      });
+    });
   }
 }
