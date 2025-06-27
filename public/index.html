@@ -465,23 +465,25 @@
             (job) => `
                 <div class="job-item" data-job-id="${job.id}">
                     <div class="job-header">
-                        <div class="job-title">${job.originalName}</div>
+                        <div class="job-title">Job ID: ${job.id}</div>
                         <div class="job-status status-${job.status}">${
               job.status.charAt(0).toUpperCase() + job.status.slice(1)
             }</div>
                     </div>
                     <div class="job-meta">
+                        Original Name: ${job.originalName}<br>
                         Created: ${new Date(job.createdAt).toLocaleString()}
                         ${
                           job.completedAt
-                            ? `• Completed: ${new Date(
+                            ? `<br>Completed: ${new Date(
                                 job.completedAt
                               ).toLocaleString()}`
                             : ""
                         }
-                    </div>                    ${
+                    </div>
+                    ${
                       job.status === "processing"
-                        ? '<div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>'
+                        ? `<div class="progress-bar"><div class="progress-fill" style="width: ${job.progress*100}%;"></div></div>`
                         : ""
                     }
                     ${
@@ -489,31 +491,36 @@
                         ? `<div class="error-message">${job.error}</div>`
                         : ""
                     }
-                    <div class="job-actions">
-                        ${
-                          job.status === "processed"
-                            ? `
-                            <a href="/api/download/${job.id}/html" class="btn btn-small" download>
-                                📄 Download HTML
-                            </a>
-                            <a href="/api/download/${job.id}/pdf" class="btn btn-small" download>
-                                📑 Download PDF
-                            </a>
-                            <a href="/api/download/${job.id}/zip" class="btn btn-small" download>
-                                📦 Download ZIP
-                            </a>
+                    ${
+                      job.status === "processed" && job.files && job.files.length > 0
+                        ? `
+                        <div class="job-files">
+                            <h4 style="margin-bottom: 15px; color: #666;">Files:</h4>
+                            ${job.files.map((file, idx) => `
+                                <div class="file-item" style="margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                    <div style="font-weight: 500; margin-bottom: 8px; margin-left: 5px">[${idx}] ${file.basename}</div>
+                                    <div class="file-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <a href="/api/download/${job.id}/${idx}/pdf" class="btn btn-small" download>
+                                            📑 PDF
+                                        </a>
+                                        <a href="/api/download/${job.id}/${idx}/zip" class="btn btn-small" download>
+                                            📦 ZIP
+                                        </a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                         `
-                            : `
-                            <a class="btn btn-small btn-disabled" disabled>
-                                ${
-                                  job.status === "processing"
-                                    ? "⏳ Processing..."
-                                    : "⏸️ Pending"
-                                }
-                            </a>
+                        : job.status === "pending"
+                        ? `
+                        <div class="job-actions">
+                            <span class="btn btn-small btn-disabled">
+                                ⏸️ Pending
+                            </span>
+                        </div>
                         `
-                        }
-                    </div>
+                        : ""
+                    }
                 </div>
             `
           )

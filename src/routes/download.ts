@@ -4,18 +4,20 @@ import { DocumentService } from '../services/DocumentService';
 export function downloadRouter(documentService: DocumentService) {
   const router = express.Router();
 
-  router.get('/:jobId/:fileId/:fileType', (async (req, res) => {
+  router.get('/:jobId/:fileIdx/:fileType', (async (req, res) => {
     try {
-      const { jobId, fileId, fileType } = req.params;
+      const { jobId, fileIdx: fileIdx, fileType } = req.params;
       
-      if (!['html', 'pdf', 'zip'].includes(fileType)) {
+      if (!['pdf', 'zip'].includes(fileType)) {
         return res.status(400).json({ error: 'Invalid file type' });
       }
 
+      console.debug(`Request to download file: jobId=${jobId}, fileIdx=${fileIdx}, fileType=${fileType}`);
+
       const fileData = await documentService.getFileStream(
         jobId,
-        parseInt(fileId),
-        fileType as 'html' | 'pdf' | 'zip'
+        parseInt(fileIdx),
+        fileType as 'pdf' | 'zip'
       );
 
       if (!fileData) {
@@ -26,7 +28,6 @@ export function downloadRouter(documentService: DocumentService) {
 
       // Set appropriate headers
       const mimeTypes = {
-        html: 'text/html',
         pdf: 'application/pdf',
         zip: 'application/zip',
       };

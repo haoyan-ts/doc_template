@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import puppeteer from "puppeteer";
 import archiver from "archiver";
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { Multer } from "multer";
@@ -16,11 +17,13 @@ export interface ProcessingJob {
   createdAt: Date;
   completedAt?: Date;
   files?: {
+    basename: string;
     html?: string;
     pdf?: string;
     zip?: string;
   }[];
   error?: string;
+  progress?: number; // Optional progress percentage
 }
 
 export class DocumentService {
@@ -36,13 +39,22 @@ export class DocumentService {
   }
 
   private async initializeDirectories() {
+    // Remove all existing directories to ensure a clean start
+    try {
+      await fs.rm(this.uploadDir, { recursive: true, force: true });
+      await fs.rm(this.outputDir, { recursive: true, force: true });
+      await fs.rm(this.jobsDir, { recursive: true, force: true });
+    } catch (error) {
+      console.error("Failed to remove existing directories:", error);
+    }
+
     try {
       await fs.mkdir(this.uploadDir, { recursive: true });
       await fs.mkdir(this.outputDir, { recursive: true });
       await fs.mkdir(this.jobsDir, { recursive: true });
-      await fs.mkdir(path.join(this.outputDir, "html"), { recursive: true });
-      await fs.mkdir(path.join(this.outputDir, "pdf"), { recursive: true });
-      await fs.mkdir(path.join(this.outputDir, "zip"), { recursive: true });
+      // await fs.mkdir(path.join(this.outputDir, "html"), { recursive: true });
+      // await fs.mkdir(path.join(this.outputDir, "pdf"), { recursive: true });
+      // await fs.mkdir(path.join(this.outputDir, "zip"), { recursive: true });
     } catch (error) {
       console.error("Failed to create directories:", error);
     }
@@ -118,7 +130,8 @@ export class DocumentService {
   //   return jobId;
   // }
 
-  private async renderStaticHtml(
+  private async generatePdfFromHtml(
+    jobId: string,
     htmlPath: string,
     baseName: string
   ): Promise<string> {
@@ -141,26 +154,30 @@ export class DocumentService {
       });
 
       const sanitizedBaseName = this.sanitizeFilename(baseName);
-      const staticHtmlPath = this.createSafeFilePath(
-        path.join(this.outputDir, "html"),
+      const pdfPath = this.createSafeFilePath(
+        path.join(this.outputDir, jobId, "pdf"),
         sanitizedBaseName,
-        "_static.html"
+        ".pdf"
       );
-      const content = await page.content();
-      await fs.writeFile(staticHtmlPath, content, "utf8");
+      // const content = await page.content();
+      // await fs.writeFile(staticHtmlPath, content, "utf8");
+      await page.pdf({
+        path: pdfPath,
+      });
 
-      return staticHtmlPath;
+      return pdfPath;
     } finally {
       await browser.close();
     }
   }
   private async generatePdf(
+    jobId: string,
     htmlPath: string,
     baseName: string
   ): Promise<string> {
     const sanitizedBaseName = this.sanitizeFilename(baseName);
     const pdfPath = this.createSafeFilePath(
-      path.join(this.outputDir, "pdf"),
+      path.join(this.outputDir, jobId, "pdf"),
       sanitizedBaseName,
       ".pdf"
     );
@@ -210,19 +227,18 @@ export class DocumentService {
     });
   }
   private async createZip(
-    htmlPath: string,
-    pdfPath: string,
+    jobId: string,
     baseName: string
   ): Promise<string> {
     const sanitizedBaseName = this.sanitizeFilename(baseName);
     const zipPath = this.createSafeFilePath(
-      path.join(this.outputDir, "zip"),
+      path.join(this.outputDir, jobId, "zip"),
       sanitizedBaseName,
       ".zip"
     );
 
     return new Promise((resolve, reject) => {
-      const output = require("fs").createWriteStream(zipPath);
+      const output = fsSync.createWriteStream(zipPath);
       const archive = archiver("zip", { zlib: { level: 9 } });
 
       output.on("close", () => {
@@ -234,8 +250,19 @@ export class DocumentService {
       });
 
       archive.pipe(output);
-      archive.file(htmlPath, { name: `${sanitizedBaseName}.html` });
-      archive.file(pdfPath, { name: `${sanitizedBaseName}.pdf` });
+      
+      // Add HTML directory contents to the zip
+      const htmlDir = path.join(this.outputDir, jobId, "html");
+      if (fsSync.existsSync(htmlDir)) {
+        archive.directory(htmlDir, "html");
+      }
+
+      // Add PDF directory contents to the zip
+      const pdfDir = path.join(this.outputDir, jobId, "pdf");
+      if (fsSync.existsSync(pdfDir)) {
+        archive.directory(pdfDir, "pdf");
+      }
+
       archive.finalize();
     });
   }
@@ -259,21 +286,31 @@ export class DocumentService {
 
   async getFileStream(
     jobId: string,
-    fileId: number,
-    fileType: "html" | "pdf" | "zip"
+    fileIdx: number,
+    fileType: "pdf" | "zip"
   ): Promise<{ stream: NodeJS.ReadableStream; filename: string } | null> {
     const job = this.jobs.get(jobId);
-    if (!job || !job.files || !job.files[fileId][fileType]) {
+
+    if (!job || !job.files) {
+      console.error(`Job with ID ${jobId} not found or has no files.`);
       return null;
     }
 
-    const fileName = job.files[fileId]["html"] as string;
-    const filePath = path.join(this.outputDir, job.files[fileId][fileType]!);
+    const file = job.files[fileIdx];
+
+    if (!file || !file[fileType]) {
+      console.error(
+        `File with ID ${fileIdx} and type ${fileType} not found in job ${jobId}.`
+      );
+      return null;
+    }
+
+    const filePath = path.join(this.outputDir, file[fileType]);
+    console.log(`File path: ${filePath}`);
+
     try {
-      const stream = require("fs").createReadStream(filePath);
-      const ext = path.extname(filePath);
-      const baseName = path.parse(fileName).name;
-      const filename = `${baseName}${ext}`;
+      const stream = fsSync.createReadStream(filePath);
+      const filename = path.basename(filePath);
 
       return { stream, filename };
     } catch (error) {
@@ -361,23 +398,46 @@ export class DocumentService {
         console.log(
           `Processing file: "${filePath}" with base name: "${baseName}"`
         );
-        const htmlPath = await this.convertToHtmlSelfContained(
+        const htmlPath = await this.generateHtmlFromMarkdown(
+          jobId,
           filePath,
-          baseName,
-          jobId
+          baseName
         );
-        const staticHtmlPath = await this.renderStaticHtml(htmlPath, baseName);
-        const pdfPath = await this.generatePdf(staticHtmlPath, baseName);
-        const zipPath = await this.createZip(staticHtmlPath, pdfPath, baseName);
+        this.emitJobUpdate({
+          ...job,
+          status: "processing",
+          progress:
+            ((1 / 2) * (markdownFiles.indexOf(file) + 1)) /
+            markdownFiles.length,
+        });
+        const pdfPath = await this.generatePdfFromHtml(
+          jobId,
+          htmlPath,
+          baseName
+        );
 
-        console.log(`Generated files: ${htmlPath}, ${pdfPath}, ${zipPath}`);
+        const zipPath = await this.createZip(
+          jobId,
+          htmlPath,
+        );
+
+        this.emitJobUpdate({
+          ...job,
+          status: "processing",
+          progress: (markdownFiles.indexOf(file) + 1) / markdownFiles.length,
+        });
+
+        console.log(
+          `Generated files: ${htmlPath}, ${pdfPath}, ${zipPath}`
+        );
         // Update job with generated files
         if (!job.files) {
           job.files = [];
         }
 
         job.files.push({
-          html: path.relative(this.outputDir, staticHtmlPath),
+          basename: baseName,
+          // html: path.relative(this.outputDir, htmlPath),
           pdf: path.relative(this.outputDir, pdfPath),
           zip: path.relative(this.outputDir, zipPath),
         });
@@ -394,21 +454,21 @@ export class DocumentService {
     }
   }
 
-  private async convertToHtmlSelfContained(
+  private async generateHtmlFromMarkdown(
+    jobId: string,
     markdownPath: string,
-    baseName: string,
-    jobId: string
+    baseName: string
   ): Promise<string> {
     const sanitizedBaseName = this.sanitizeFilename(baseName);
     const htmlPath = this.createSafeFilePath(
-      path.join(this.outputDir, "html"),
+      path.join(this.outputDir, jobId, "html"),
       sanitizedBaseName,
       ".html"
     );
 
-    const jobFolder = path.join(this.jobsDir, jobId);
+    const htmlDir = path.join(this.outputDir, jobId, "html");
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const pandocArgs = [
         markdownPath,
         "--from",
@@ -418,15 +478,42 @@ export class DocumentService {
         "--toc",
         "--toc-depth=3",
         "--standalone",
-        "--template=../../templates/custom.html",
-        "--embed-resources",
+        "--template=../../../templates/custom.html",
         "--output",
         htmlPath,
+        "--extract-media", // Extract and save media files
+        htmlDir, // Path to save media files
       ];
+
+      // Add CSS stylesheets if they exist
+      const resourceDir = path.join(process.cwd(), "css");
+      const resourceFiles = await fs.readdir(resourceDir);
+
+      await fs.mkdir(path.join(htmlDir, "css"), { recursive: true });
+
+      // Copy all resource files to the css folder under the job folder
+      resourceFiles.forEach(async (files) => {
+        await fs.copyFile(
+          path.join(resourceDir, files),
+          path.join(htmlDir, "css", files)
+        );
+      });
+      
+      for (const cssFile of resourceFiles.filter((file) => file.endsWith(".css"))) {
+        // Add the CSS file relative paths to pandoc arguments according to the job folder
+        pandocArgs.push("--css");
+        // Use relative path to the job folder
+        pandocArgs.push(
+          path.join("css", cssFile).replace(/\\/g, "/") // Ensure forward slashes for pandoc
+        );
+      }
+
+      console.debug(`Running pandoc with args: ${pandocArgs.join(" ")}`);
+      console.debug(`Working directory: ${htmlDir}`);
 
       // Set the working directory to the job folder so relative paths work
       const pandoc = spawn("pandoc", pandocArgs, {
-        cwd: jobFolder,
+        cwd: htmlDir,
         env: { ...process.env, LANG: "en_US.UTF-8", LC_ALL: "en_US.UTF-8" },
       });
 

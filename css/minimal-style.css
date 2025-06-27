@@ -13,6 +13,12 @@ body {
     Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Container for TOC + content layout */
+.doc-container {
   max-width: 85%;
   margin: 0 auto;
   padding: 15px;
@@ -20,6 +26,15 @@ body {
   display: flex;
   flex-direction: row;
   gap: 30px;
+}
+
+/* Fallback for documents without TOC */
+body:not(:has(#TOC)) .doc-container,
+body:not(:has(#TOC)) #maincontent {
+  display: block;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 /* TOC navigation styling for screen */
@@ -226,7 +241,7 @@ img {
 
 /* Responsive design for smaller screens */
 @media screen and (max-width: 768px) {
-  body {
+  .doc-container {
     flex-direction: column;
   }
 
@@ -268,9 +283,12 @@ img {
     }
   }
   
-  /* Reset the body flex layout for print */
-  body {
+  /* Reset the container flex layout for print */
+  .doc-container {
     display: block;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
   
   /* TOC styling for print */
