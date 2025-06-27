@@ -291,7 +291,7 @@
         <div class="upload-zone" id="uploadZone">
           <div class="upload-icon">📁</div>
           <div class="upload-text">
-            Drag & drop your Markdown files or folders here, or click to browse
+            Drag & drop your Markdown files, or click to browse
           </div>
           <div class="upload-buttons">
             <button
@@ -344,17 +344,6 @@
       const fileInput = document.getElementById("fileInput");
       const folderInput = document.getElementById("folderInput");
       const jobsList = document.getElementById("jobsList");
-      // File upload handling
-      uploadZone.addEventListener("click", (e) => {
-        // Only trigger if clicking on the upload zone itself, not the buttons
-        if (
-          e.target === uploadZone ||
-          e.target.classList.contains("upload-icon") ||
-          e.target.classList.contains("upload-text")
-        ) {
-          fileInput.click();
-        }
-      });
 
       uploadZone.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -389,7 +378,11 @@
           // Check if it's a markdown file
           if (file.name.endsWith(".md") || file.type === "text/markdown") {
             hasFiles = true;
-            formData.append("files", file, encodeURIComponent(file.webkitRelativePath));
+            formData.append(
+              "files",
+              file,
+              encodeURIComponent(file.webkitRelativePath)
+            );
           } else if (
             file.type.startsWith("image/") ||
             file.type.startsWith("video/") ||
@@ -397,7 +390,11 @@
             file.name.match(/\.(png|jpg|jpeg|gif|svg|webp|pdf|doc|docx|txt)$/i)
           ) {
             // Add media files
-            formData.append("files", file, encodeURIComponent(file.webkitRelativePath));
+            formData.append(
+              "files",
+              file,
+              encodeURIComponent(file.webkitRelativePath)
+            );
           }
         }
 
@@ -483,8 +480,14 @@
                     </div>
                     ${
                       job.status === "processing"
-                        ? `<div class="progress-bar"><div class="progress-fill" style="width: ${job.progress*100}%;"></div></div>`
-                        : ""
+                      ? `<div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(job.progress !== undefined) ? Math.round(job.progress * 100) : 0}%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+                        <span>Processing...</span>
+                        <span>${(job.progress !== undefined) ? Math.round(job.progress * 100) : 0}%</span>
+                        </div>`
+                      : ""
                     }
                     ${
                       job.error
@@ -492,11 +495,15 @@
                         : ""
                     }
                     ${
-                      job.status === "processed" && job.files && job.files.length > 0
+                      job.status === "processed" &&
+                      job.files &&
+                      job.files.length > 0
                         ? `
                         <div class="job-files">
                             <h4 style="margin-bottom: 15px; color: #666;">Files:</h4>
-                            ${job.files.map((file, idx) => `
+                            ${job.files
+                              .map(
+                                (file, idx) => `
                                 <div class="file-item" style="margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                     <div style="font-weight: 500; margin-bottom: 8px; margin-left: 5px">[${idx}] ${file.basename}</div>
                                     <div class="file-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -508,7 +515,9 @@
                                         </a>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `
+                              )
+                              .join("")}
                         </div>
                         `
                         : job.status === "pending"

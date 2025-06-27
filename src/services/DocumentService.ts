@@ -421,12 +421,15 @@ export class DocumentService {
           htmlPath,
         );
 
+        
         this.emitJobUpdate({
           ...job,
           status: "processing",
           progress: (markdownFiles.indexOf(file) + 1) / markdownFiles.length,
         });
-
+        
+        // emulate a progress update
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         console.log(
           `Generated files: ${htmlPath}, ${pdfPath}, ${zipPath}`
         );
