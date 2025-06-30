@@ -40,9 +40,6 @@ $if(title)$
 $if(subtitle)$
 <p class="subtitle">$subtitle$</p>
 $endif$
-$for(author)$
-<p class="author">$author$</p>
-$endfor$
 $if(date)$
 <p class="date">$date$</p>
 $endif$
@@ -54,6 +51,7 @@ $abstract$
 $endif$
 </header>
 $endif$
+<div class="container">
 $if(toc)$
 <nav id="$idprefix$TOC" role="doc-toc">
 $if(toc-title)$
@@ -62,7 +60,10 @@ $endif$
 $table-of-contents$
 </nav>
 $endif$
+<main id="main-content" role="main">
 $body$
+</main>
+</div>
 $for(include-after)$
 $include-after$
 $endfor$

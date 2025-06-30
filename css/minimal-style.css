@@ -17,10 +17,24 @@ body {
   margin: 0 auto;
   padding: 15px;
   margin-bottom: 100px;
+}
+
+/* title-block-header */
+#title-block-header {
   display: flex;
   flex-direction: row;
-  gap: 30px;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
 }
+
+.container {
+  display: flex;
+  flex-direction: row;
+  margin: 0 auto;
+  padding: 20px;
+}
+
 
 /* TOC navigation styling for screen */
 #TOC {
@@ -54,12 +68,18 @@ body {
 }
 
 /* Main content container */
-#maincontent {
-  flex-grow: 1;
-  min-width: 0; /* Ensures content can shrink if needed */
+#main-content {
+  padding-left: 40px;
+  /* Initialize counters for section numbering - start from h2 */
+  counter-reset: h2-counter;
 }
 
-/* Headers */
+/* Counter initialization for the body or main container */
+body {
+  counter-reset: h2-counter;
+}
+
+/* Headers with section numbering */
 h1,
 h2,
 h3,
@@ -69,6 +89,64 @@ h6 {
   color: #0066cc;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+/* Section numbering counters - start from h2 */
+h2 {
+  counter-increment: h2-counter;
+  counter-reset: h3-counter;
+}
+
+h3 {
+  counter-increment: h3-counter;
+  counter-reset: h4-counter;
+}
+
+h4 {
+  counter-increment: h4-counter;
+  counter-reset: h5-counter;
+}
+
+h5 {
+  counter-increment: h5-counter;
+  counter-reset: h6-counter;
+}
+
+h6 {
+  counter-increment: h6-counter;
+}
+
+/* Add section numbers before heading content - start from h2 */
+/* H1 has no numbering - it's the document title */
+
+h2::before {
+  content: counter(h2-counter) ". ";
+  color: #0066cc;
+  font-weight: 600;
+}
+
+h3::before {
+  content: counter(h2-counter) "." counter(h3-counter) ". ";
+  color: #0066cc;
+  font-weight: 600;
+}
+
+h4::before {
+  content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) ". ";
+  color: #0066cc;
+  font-weight: 600;
+}
+
+h5::before {
+  content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) ". ";
+  color: #0066cc;
+  font-weight: 600;
+}
+
+h6::before {
+  content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) "." counter(h6-counter) ". ";
+  color: #0066cc;
   font-weight: 600;
 }
 
@@ -83,6 +161,14 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex: 1;
+}
+
+/* h1 content wrapper to handle numbering and text together */
+h1 .heading-content {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
 }
 
 h1::after {
@@ -267,10 +353,11 @@ img {
       padding: 5px;
     }
   }
-  
-  /* Reset the body flex layout for print */
-  body {
+ 
+  .container {
     display: block;
+    max-width: 100%;
+    padding: 0;
   }
   
   /* TOC styling for print */
@@ -335,8 +422,10 @@ img {
   }
   
   /* Basic document styling */
-  div#maincontent {
+  div#main-content {
     page: maincontent; /* Apply the main content page template */
+    /* Reset counters for print - start from h2 */
+    counter-reset: h2-counter;
   }
 
   div#toc {
@@ -347,6 +436,7 @@ img {
   h1 {
     font-size: 19pt;
   }
+  
   h2 {
     font-size: 15pt;
     page-break-before: always;
@@ -369,11 +459,25 @@ img {
     page-break-inside: avoid;
   }
 
+  h1::after {
+  content: url("ts_logo.svg");
+  width: 200px;
+  margin-left: 10px;
+  flex-shrink: 0;
+  margin-top: 16px;
+}
+
   img,
   table,
   figure,
   pre {
     page-break-inside: avoid;
+  }
+
+  #main-content {
+    margin: 0 auto;
+    padding: 0;
+    max-width: 100%;
   }
 
   /* Page settings */
