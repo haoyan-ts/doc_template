@@ -710,7 +710,6 @@
             }</div>
                     </div>
                     <div class="job-meta">
-                        Original Name: ${job.originalName}<br>
                         Created: ${new Date(job.createdAt).toLocaleString()}
                         ${
                           job.completedAt
@@ -755,16 +754,14 @@
                                         <a href="/api/download/${job.id}/${idx}/zip" class="btn btn-small" download>
                                             📦 ZIP
                                         </a>
+                                        <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                          🗑️ Delete Job
+                                      </button>
                                     </div>
                                 </div>
                             `
                               )
                               .join("")}
-                        </div>
-                        <div class="job-actions">
-                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
-                                🗑️ Delete Job
-                            </button>
                         </div>
                         `
                         : job.status === "pending"
@@ -773,32 +770,13 @@
                             <span class="btn btn-small btn-disabled">
                                 ⏸️ Pending
                             </span>
-                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
-                                🗑️ Delete Job
-                            </button>
-                        </div>
-                        `
-                        : job.status === "error"
-                        ? `
-                        <div class="job-actions">
-                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
-                                🗑️ Delete Job
-                            </button>
-                        </div>
-                        `
-                        : job.status === "processing"
-                        ? `
-                        <div class="job-actions">
-                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
-                                🗑️ Delete Job
-                            </button>
                         </div>
                         `
                         : `
                         <div class="job-actions">
-                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
-                                🗑️ Delete Job
-                            </button>
+                            <span class="btn btn-small btn-disabled">
+                                ⏳ Waiting for processing
+                            </span>
                         </div>
                         `
                     }
