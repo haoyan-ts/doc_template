@@ -1,6 +1,6 @@
 {
   "name": "document-generator-service",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Document generator service with markdown to HTML/PDF conversion",
   "main": "dist/app.js",
   "scripts": {
