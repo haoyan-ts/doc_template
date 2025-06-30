@@ -31,7 +31,6 @@ body {
 .container {
   display: flex;
   flex-direction: row;
-  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -436,14 +435,8 @@ img {
   /* Typography adjustments for print */
   h1 {
     font-size: 19pt;
-    /* Adjust h1 layout for print - remove flex to avoid issues */
-    display: block !important;
   }
   
-  /* Hide logo in print mode to focus on content */
-  h1::after {
-    display: none;
-  }
   h2 {
     font-size: 15pt;
     page-break-before: always;
@@ -466,11 +459,25 @@ img {
     page-break-inside: avoid;
   }
 
+  h1::after {
+  content: url("ts_logo.svg");
+  width: 200px;
+  margin-left: 10px;
+  flex-shrink: 0;
+  margin-top: 16px;
+}
+
   img,
   table,
   figure,
   pre {
     page-break-inside: avoid;
+  }
+
+  #main-content {
+    margin: 0 auto;
+    padding: 0;
+    max-width: 100%;
   }
 
   /* Page settings */

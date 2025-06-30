@@ -38,5 +38,25 @@ export function filesRouter(documentService: DocumentService) {
     }
   }) as express.RequestHandler);
 
+  // Delete specific job
+  router.delete('/:jobId', (async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const deleted = await documentService.deleteJob(jobId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+
+      res.json({ message: 'Job deleted successfully', jobId });
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      res.status(500).json({
+        error: 'Failed to delete job',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }) as express.RequestHandler);
+
   return router;
 }

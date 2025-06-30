@@ -15,77 +15,140 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         line-height: 1.6;
         color: #333;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #f8f9fa;
         min-height: 100vh;
-        padding: 20px;
+        padding: 0;
       }
 
       .container {
         max-width: 1200px;
         margin: 0 auto;
         background: white;
-        border-radius: 15px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
+        min-height: 100vh;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
       }
 
       .header {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        padding: 30px;
+        /* background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%); */
+        /* color: white; */
+        padding: 40px 30px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
       }
 
       .header h1 {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
+        font-size: 2.8rem;
+        margin-bottom: 15px;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header .logo {
+        display: inline-block;
+        margin-right: 15px;
+        font-size: 3rem;
       }
 
       .header p {
-        font-size: 1.1rem;
-        opacity: 0.9;
+        font-size: 1.2rem;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+        font-weight: 300;
       }
 
       .upload-section {
-        padding: 40px;
-        border-bottom: 1px solid #eee;
+        padding: 50px 40px;
+        background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
+      }
+
+      .section-title {
+        text-align: center;
+        margin-bottom: 40px;
+        color: #1e293b;
+        font-size: 2rem;
+        font-weight: 600;
       }
 
       .upload-zone {
-        border: 3px dashed #667eea;
-        border-radius: 10px;
-        padding: 40px;
+        border: 2px dashed #3b82f6;
+        border-radius: 16px;
+        padding: 60px 40px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        background: #f8f9ff;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-zone::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+        transition: all 0.3s ease;
       }
 
       .upload-zone:hover {
-        border-color: #764ba2;
-        background: #f0f4ff;
+        border-color: #1d4ed8;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+      }
+
+      .upload-zone:hover::before {
+        background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
       }
 
       .upload-zone.dragover {
-        border-color: #28a745;
-        background: #f0fff4;
+        border-color: #10b981;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
       }
 
       .upload-icon {
-        font-size: 4rem;
-        color: #667eea;
-        margin-bottom: 20px;
+        font-size: 4.5rem;
+        color: #3b82f6;
+        margin-bottom: 25px;
+        position: relative;
+        z-index: 1;
       }
 
       .upload-text {
-        font-size: 1.2rem;
-        margin-bottom: 15px;
-        color: #666;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        color: #475569;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+      }
+
+      .upload-subtext {
+        font-size: 1rem;
+        color: #64748b;
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 1;
       }
 
       .file-input {
@@ -93,180 +156,312 @@
       }
 
       .btn {
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 25px;
+        padding: 14px 32px;
+        border-radius: 12px;
         cursor: pointer;
         font-size: 1rem;
+        font-weight: 600;
         transition: all 0.3s ease;
         display: inline-block;
         text-decoration: none;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
       }
 
       .btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+      }
+
+      .btn-danger:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.35);
+      }
+
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 0.875rem;
+      }
+
+      .job-actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .job-actions .file-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       .jobs-section {
-        padding: 40px;
+        padding: 50px 40px;
+        background: #f8fafc;
+      }
+
+      .jobs-section h2 {
+        color: #1e293b;
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 30px;
+        text-align: center;
       }
 
       .job-item {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-left: 4px solid #667eea;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border: 1px solid #e2e8f0;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .job-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
       }
 
       .job-item:hover {
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         transform: translateY(-2px);
+        border-color: #cbd5e1;
       }
 
       .job-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
       }
 
       .job-title {
         font-weight: 600;
-        font-size: 1.1rem;
-        color: #333;
+        font-size: 1.2rem;
+        color: #1e293b;
       }
 
       .job-status {
-        padding: 5px 15px;
-        border-radius: 15px;
+        padding: 8px 16px;
+        border-radius: 20px;
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       .status-uploaded {
-        background: #e3f2fd;
-        color: #1976d2;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        border: 1px solid #93c5fd;
       }
 
       .status-processing {
-        background: #fff3e0;
-        color: #f57c00;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        border: 1px solid #f59e0b;
         animation: pulse 2s infinite;
       }
 
       .status-processed {
-        background: #e8f5e8;
-        color: #2e7d32;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border: 1px solid #10b981;
       }
 
       .status-error {
-        background: #ffebee;
-        color: #c62828;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        border: 1px solid #ef4444;
       }
 
       @keyframes pulse {
-        0% {
+        0%, 100% {
           opacity: 1;
         }
         50% {
-          opacity: 0.5;
-        }
-        100% {
-          opacity: 1;
+          opacity: 0.7;
         }
       }
 
       .job-meta {
-        font-size: 0.9rem;
-        color: #666;
-        margin-bottom: 15px;
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 20px;
+        line-height: 1.6;
       }
 
       .job-actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
       }
 
       .btn-small {
-        padding: 8px 20px;
+        padding: 10px 20px;
         font-size: 0.9rem;
-        background: linear-gradient(45deg, #28a745, #20c997);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 8px;
+        font-weight: 500;
       }
 
       .btn-small:hover {
-        background: linear-gradient(45deg, #218838, #1ea085);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
       }
 
       .btn-disabled {
-        background: #ccc;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        color: #64748b;
         cursor: not-allowed;
+        box-shadow: none;
       }
 
       .btn-disabled:hover {
         transform: none;
         box-shadow: none;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
       }
 
       .progress-bar {
         width: 100%;
-        height: 4px;
-        background: #e0e0e0;
-        border-radius: 2px;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
         overflow: hidden;
-        margin-top: 10px;
+        margin-top: 15px;
+        position: relative;
       }
 
       .progress-fill {
         height: 100%;
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
         width: 0%;
         transition: width 0.3s ease;
+        position: relative;
+      }
+
+      .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
       }
 
       .error-message {
-        background: #ffebee;
-        color: #c62828;
-        padding: 10px;
-        border-radius: 5px;
-        margin-top: 10px;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
         font-size: 0.9rem;
+        border: 1px solid #f87171;
       }
 
       .empty-state {
         text-align: center;
-        padding: 60px 20px;
-        color: #666;
+        padding: 80px 20px;
+        color: #64748b;
       }
 
       .empty-state-icon {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        opacity: 0.5;
+        font-size: 4rem;
+        margin-bottom: 25px;
+        opacity: 0.6;
+      }
+
+      .empty-state p {
+        font-size: 1.1rem;
+        font-weight: 500;
       }
 
       .upload-buttons {
         display: flex;
-        gap: 15px;
+        gap: 20px;
         justify-content: center;
         flex-wrap: wrap;
-        margin-top: 10px;
+        margin-top: 15px;
       }
 
       .upload-buttons .btn {
-        min-width: 140px;
+        min-width: 160px;
+        position: relative;
+        z-index: 1;
       }
 
       @media (max-width: 768px) {
+        .header {
+          padding: 30px 20px;
+        }
+
+        .header h1 {
+          font-size: 2.2rem;
+        }
+
+        .upload-section,
+        .jobs-section {
+          padding: 30px 20px;
+        }
+
+        .upload-zone {
+          padding: 40px 20px;
+        }
+
         .job-header {
           flex-direction: column;
           align-items: flex-start;
-          gap: 10px;
+          gap: 15px;
         }
 
         .job-actions {
@@ -277,21 +472,44 @@
           flex: 1;
           text-align: center;
         }
+
+        .upload-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .upload-buttons .btn {
+          width: 100%;
+          max-width: 300px;
+        }
+      }
+
+      img.logo {
+        max-height: 40px;
+        margin-right: 10px;
+        vertical-align: middle;
+
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>📄TechShare Document Generator</h1>
-        <p>Convert Markdown files to HTML and PDF with styling</p>
+        <h1>
+          <img class="logo" src="ts_logo.svg"></img>Document Generator
+        </h1>
+        <p>Advanced Markdown to HTML/PDF conversion with professional styling</p>
       </div>
 
       <div class="upload-section">
+        <h2 class="section-title">Upload Your Documents</h2>
         <div class="upload-zone" id="uploadZone">
-          <div class="upload-icon">📁</div>
+          <div class="upload-icon">☁️</div>
           <div class="upload-text">
-            Drag & drop your Markdown files, or click to browse
+            Drag & drop your Markdown files here
+          </div>
+          <div class="upload-subtext">
+            or click below to browse your files and folders
           </div>
           <div class="upload-buttons">
             <button
@@ -327,10 +545,10 @@
       </div>
 
       <div class="jobs-section">
-        <h2 style="margin-bottom: 30px; color: #333">Processing Jobs</h2>
+        <h2>Processing Jobs</h2>
         <div id="jobsList">
           <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-icon">⚡</div>
             <p>No jobs yet. Upload some Markdown files to get started!</p>
           </div>
         </div>
@@ -428,6 +646,30 @@
           alert("Please include at least one Markdown (.md) file.");
         }
       } // Load and display jobs
+      async function deleteJob(jobId) {
+        if (!confirm(`Are you sure you want to delete job ${jobId}? This action cannot be undone.`)) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/files/${jobId}`, {
+            method: 'DELETE',
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Job deleted:', result);
+            loadJobs(); // Refresh the jobs list
+          } else {
+            const error = await response.json();
+            alert(`Failed to delete job: ${error.message || 'Unknown error'}`);
+          }
+        } catch (error) {
+          console.error('Error deleting job:', error);
+          alert('Failed to delete job. Please try again.');
+        }
+      }
+
       async function loadJobs() {
         try {
           const response = await fetch("/api/files", {
@@ -450,7 +692,7 @@
         if (jobs.length === 0) {
           jobsList.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-icon">⚡</div>
                         <p>No jobs yet. Upload some Markdown files to get started!</p>
                     </div>
                 `;
@@ -519,6 +761,11 @@
                               )
                               .join("")}
                         </div>
+                        <div class="job-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                🗑️ Delete Job
+                            </button>
+                        </div>
                         `
                         : job.status === "pending"
                         ? `
@@ -526,9 +773,34 @@
                             <span class="btn btn-small btn-disabled">
                                 ⏸️ Pending
                             </span>
+                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                🗑️ Delete Job
+                            </button>
                         </div>
                         `
-                        : ""
+                        : job.status === "error"
+                        ? `
+                        <div class="job-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                🗑️ Delete Job
+                            </button>
+                        </div>
+                        `
+                        : job.status === "processing"
+                        ? `
+                        <div class="job-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                🗑️ Delete Job
+                            </button>
+                        </div>
+                        `
+                        : `
+                        <div class="job-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteJob('${job.id}')">
+                                🗑️ Delete Job
+                            </button>
+                        </div>
+                        `
                     }
                 </div>
             `
@@ -540,6 +812,11 @@
       socket.on("job-update", (job) => {
         console.log("Job update:", job);
         loadJobs(); // Refresh the jobs list when a job updates
+      });
+
+      socket.on("job-deleted", (data) => {
+        console.log("Job deleted:", data.jobId);
+        loadJobs(); // Refresh the jobs list when a job is deleted
       });
 
       // Load jobs on page load

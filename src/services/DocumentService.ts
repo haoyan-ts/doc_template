@@ -284,6 +284,40 @@ export class DocumentService {
     );
   }
 
+  async deleteJob(jobId: string): Promise<boolean> {
+    const job = this.jobs.get(jobId);
+    if (!job) {
+      return false;
+    }
+
+    try {
+      // Remove job from memory
+      this.jobs.delete(jobId);
+
+      // Clean up job folder
+      const jobFolder = path.join(this.jobsDir, jobId);
+      if (fsSync.existsSync(jobFolder)) {
+        await fs.rm(jobFolder, { recursive: true, force: true });
+      }
+
+      // Clean up output folder
+      const outputFolder = path.join(this.outputDir, jobId);
+      if (fsSync.existsSync(outputFolder)) {
+        await fs.rm(outputFolder, { recursive: true, force: true });
+      }
+
+      console.log(`Job ${jobId} deleted successfully`);
+      
+      // Emit job deletion event
+      this.io.emit('job-deleted', { jobId });
+      
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete job ${jobId}:`, error);
+      return false;
+    }
+  }
+
   async getFileStream(
     jobId: string,
     fileIdx: number,
