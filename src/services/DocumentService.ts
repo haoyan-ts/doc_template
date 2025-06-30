@@ -90,52 +90,16 @@ export class DocumentService {
 
     return safePath;
   }
-  // async processMarkdownFile(
-  //   filePath: string,
-  //   fileName: string,
-  //   originalName: string
-  // ): Promise<string> {
-  //   const jobId = uuidv4();
-
-  //   console.log(`Received file: ${fileName}`);
-  //   console.log(`Processing file: ${decodeURIComponent(originalName)}`);
-  //   console.log(`Job ID: ${jobId}`);
-
-  //   // Create job folder and move file
-  //   const jobFolder = path.join(this.uploadDir, jobId);
-  //   await fs.mkdir(jobFolder, { recursive: true });
-
-  //   const destPath = path.join(jobFolder, originalName);
-  //   await fs.copyFile(filePath, destPath);
-
-  //   const job: ProcessingJob = {
-  //     id: jobId,
-  //     fileName: fileName,
-  //     originalName: decodeURIComponent(originalName),
-  //     status: "uploaded",
-  //     createdAt: new Date(),
-  //   };
-
-  //   this.jobs.set(jobId, job);
-  //   this.emitJobUpdate(job);
-
-  //   // Start processing asynchronously using self-contained method
-  //   this.processBatchFile(jobId, destPath).catch((error) => {
-  //     console.error(`Processing failed for job ${jobId}:`, error);
-  //     job.status = "error";
-  //     job.error = error.message;
-  //     this.emitJobUpdate(job);
-  //   });
-
-  //   return jobId;
-  // }
-
+  
   private async generatePdfFromHtml(
     jobId: string,
     htmlPath: string,
     baseName: string
   ): Promise<string> {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: true, // Run in headless mode for server environments
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
 
     try {
