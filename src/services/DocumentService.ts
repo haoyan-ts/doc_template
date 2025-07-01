@@ -482,9 +482,19 @@ export class DocumentService {
         "--template=../../../templates/custom.html",
         "--output",
         htmlPath,
-        "--extract-media", // Extract and save media files
-        htmlDir, // Path to save media files
+        // "--extract-media", // Extract and save media files
+        // htmlDir, // Path to save media files
       ];
+
+      // Copy media files to the output html folder
+      const mediaDir = path.join(htmlDir, "media");
+      await fs.mkdir(mediaDir, { recursive: true });
+      const mediaFiles = await fs.readdir(path.join(this.jobsDir, jobId, "media"));
+      for (const mediaFile of mediaFiles) {
+        const sourcePath = path.join(this.jobsDir, jobId, "media", mediaFile);
+        const destPath = path.join(mediaDir, mediaFile);
+        await fs.copyFile(sourcePath, destPath);
+      }
 
       // Add CSS stylesheets if they exist
       const resourceDir = path.join(process.cwd(), "css");

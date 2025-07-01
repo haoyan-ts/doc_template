@@ -208,6 +208,9 @@ a:hover {
 /* Code Blocks */
 img {
   max-width: 100%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
  
 pre {
@@ -304,10 +307,6 @@ hr {
   margin: 24px 0;
 }
 
-/* Images */
-img {
-  max-width: 100%;
-}
 
 
 /* Responsive design for smaller screens */
