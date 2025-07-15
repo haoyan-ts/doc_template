@@ -375,6 +375,50 @@ export class DocumentService {
     return { jobId };
   }
 
+  async processSingleMarkdownFile(
+    filePath: string,
+    fileName: string,
+    originalName: string
+  ): Promise<string> {
+    const jobId = uuidv4();
+    console.log(`Processing single file with Job ID: ${jobId}`);
+    console.log(`File: ${originalName} (${fileName})`);
+
+    // Copy file to job folder
+    const jobFolder = path.join(this.jobsDir, jobId);
+    await fs.mkdir(jobFolder, { recursive: true });
+    console.log(`Job folder created: ${jobFolder}`);
+
+    const destPath = path.join(jobFolder, originalName);
+    await fs.mkdir(path.dirname(destPath), { recursive: true });
+    await fs.copyFile(filePath, destPath);
+
+    // Create media folder for potential media files
+    const mediaDir = path.join(jobFolder, "media");
+    await fs.mkdir(mediaDir, { recursive: true });
+
+    const job: ProcessingJob = {
+      id: jobId,
+      fileName: fileName,
+      originalName: originalName,
+      status: "uploaded",
+      createdAt: new Date(),
+    };
+
+    this.jobs.set(jobId, job);
+    this.emitJobUpdate(job);
+
+    // Start processing asynchronously
+    this.processBatchFile(jobId).catch((error) => {
+      console.error(`Processing failed for job ${jobId}:`, error);
+      job.status = "error";
+      job.error = error.message;
+      this.emitJobUpdate(job);
+    });
+
+    return jobId;
+  }
+
   private async processBatchFile(jobId: string): Promise<void> {
     const job = this.jobs.get(jobId);
     if (!job) return;
@@ -489,11 +533,18 @@ export class DocumentService {
       // Copy media files to the output html folder
       const mediaDir = path.join(htmlDir, "media");
       await fs.mkdir(mediaDir, { recursive: true });
-      const mediaFiles = await fs.readdir(path.join(this.jobsDir, jobId, "media"));
-      for (const mediaFile of mediaFiles) {
-        const sourcePath = path.join(this.jobsDir, jobId, "media", mediaFile);
-        const destPath = path.join(mediaDir, mediaFile);
-        await fs.copyFile(sourcePath, destPath);
+      
+      const jobMediaDir = path.join(this.jobsDir, jobId, "media");
+      try {
+        const mediaFiles = await fs.readdir(jobMediaDir);
+        for (const mediaFile of mediaFiles) {
+          const sourcePath = path.join(jobMediaDir, mediaFile);
+          const destPath = path.join(mediaDir, mediaFile);
+          await fs.copyFile(sourcePath, destPath);
+        }
+      } catch (error) {
+        // Media folder doesn't exist or is empty, which is fine for single file uploads
+        console.log(`No media files found in ${jobMediaDir}`);
       }
 
       // Add CSS stylesheets if they exist

@@ -578,6 +578,7 @@
         handleFiles(e.dataTransfer.files);
       });
       fileInput.addEventListener("change", (e) => {
+        console.log("File input changed");
         handleFiles(e.target.files);
       });
 
@@ -591,15 +592,18 @@
 
         console.log(files);
 
-        let hasFiles = false;
+        let markdownFiles = [];
+        let mediaFiles = [];
+        
         for (let file of files) {
           // Check if it's a markdown file
           if (file.name.endsWith(".md") || file.type === "text/markdown") {
-            hasFiles = true;
+            console.log("Markdown file:", file.name);
+            markdownFiles.push(file);
             formData.append(
               "files",
               file,
-              encodeURIComponent(file.webkitRelativePath)
+              encodeURIComponent(file.name)
             );
           } else if (
             file.type.startsWith("image/") ||
@@ -608,6 +612,8 @@
             file.name.match(/\.(png|jpg|jpeg|gif|svg|webp|pdf|doc|docx|txt)$/i)
           ) {
             // Add media files
+            console.log("Media file:", file.name);
+            mediaFiles.push(file);
             formData.append(
               "files",
               file,
@@ -616,14 +622,23 @@
           }
         }
 
-        if (!hasFiles) {
+        if (markdownFiles.length === 0) {
           alert("Please include at least one Markdown (.md) file.");
           return;
         }
 
         if (formData.has("files")) {
           try {
-            const response = await fetch("/api/upload/multiple", {
+            let endpoint = "/api/upload/multiple";
+            
+            // Use single file endpoint if there's only one markdown file and no media files
+            if (markdownFiles.length === 1 && mediaFiles.length === 0) {
+              console.log("Using single file endpoint");
+              console.log(formData.get("files"));
+              endpoint = "/api/upload/";
+            }
+            
+            const response = await fetch(endpoint, {
               method: "POST",
               body: formData,
               headers: {
