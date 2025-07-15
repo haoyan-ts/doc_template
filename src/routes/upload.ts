@@ -32,31 +32,33 @@ const upload = multer({
 
 export function uploadRouter(documentService: DocumentService) {
   const router = express.Router();
-  // router.post("/", upload.single("files"), (async (req, res) => {
-  //   try {
-  //     if (!req.file) {
-  //       return res.status(400).json({ error: "No file uploaded" });
-  //     }
+  router.post("/", upload.array("files", 1), (async (req, res) => {
+    try {
+      console.log("Uploading single file");
+      console.log(req.files);
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
-  //     const jobId = await documentService.processMarkdownFile(
-  //       req.file.path,
-  //       req.file.filename,
-  //       req.file.originalname
-  //     );
+      const jobId = await documentService.processSingleMarkdownFile(
+        req.files[0].path,
+        req.files[0].filename,
+        req.files[0].originalname
+      );
 
-  //     res.json({
-  //       success: true,
-  //       jobId,
-  //       message: "File uploaded and processing started",
-  //     });
-  //   } catch (error) {
-  //     console.error("Upload error:", error);
-  //     res.status(500).json({
-  //       error: "Failed to process file",
-  //       message: error instanceof Error ? error.message : "Unknown error",
-  //     });
-  //   }
-  // }) as RequestHandler);
+      res.json({
+        success: true,
+        jobId,
+        message: "File uploaded and processing started",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({
+        error: "Failed to process file",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }) as RequestHandler);
 
   // Handle a folder upload
   router.post("/folder", upload.array("files", 50), (async (req, res) => {
